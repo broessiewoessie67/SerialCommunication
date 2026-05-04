@@ -58,6 +58,11 @@ namespace SerialCommunication
             {
                 if (serialPortArduino.IsOpen)
                 {
+                    serialPortArduino.Close();
+                    radioButtonVerbonden.Checked = false;
+                    buttonConnect.Text = "Connect";
+                    labelStatus.Text = "Status: Disconnected";
+
                 }
                 else
                 {
@@ -90,10 +95,25 @@ namespace SerialCommunication
                     serialPortArduino.WriteLine(commando);
                     string antwoord = serialPortArduino.ReadLine();
                     antwoord = antwoord.TrimEnd();
+                    if (antwoord == "pong")
+                    {
+                        radioButtonVerbonden.Checked = true;
+                        buttonConnect.Text = "Disconnect";
+                        labelStatus.Text = "Status: Verbonden"; 
+
+                    }
+                    else
+                    { serialPortArduino.Close();
+                        labelStatus.Text = "Error: verkeerd antwoord"; 
+                    }
                 }
             }
             catch (Exception exception)
-            { labelStatus.Text = "Error: " + exception.Message; }
+            { labelStatus.Text = "Error: " + exception.Message;
+            serialPortArduino.Close();
+                radioButtonVerbonden.Checked = false;
+                buttonConnect.Text = "Connect";
+            }
         }
 
         private void tabPageInstellingen_Click(object sender, EventArgs e)

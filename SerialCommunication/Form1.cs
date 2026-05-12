@@ -123,6 +123,51 @@ namespace SerialCommunication
         {
 
         }
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+
+            // 0x219 is het Windows bericht voor 'Hardware Change'
+            if (m.Msg == 0x219)
+            {
+                // Als de poort open staat, maar hij is niet meer fysiek aanwezig in de lijst
+                if (serialPortArduino != null && serialPortArduino.IsOpen)
+                {
+                    string[] ports = System.IO.Ports.SerialPort.GetPortNames();
+                    if (!ports.Contains(serialPortArduino.PortName))
+                    {
+                        // De kabel is eruit! Voer de reset uit.
+                        ResetVerbindingNaVerwijderen();
+                    }
+                }
+            }
+        }
+
+        // 2. Deze methode herstelt de UI en sluit de poort netjes af
+        private void ResetVerbindingNaVerwijderen()
+        {
+            try
+            {
+                // Probeer de poort softwarematig te sluiten
+                if (serialPortArduino.IsOpen)
+                {
+                    serialPortArduino.Close();
+                }
+            }
+            catch { /* Negeren, poort is toch al weg */ }
+
+            // UI Terugzetten naar 'Niet verbonden' stand
+            buttonConnect.Text = "Connect";             // Knop terug naar Connect
+            radioButtonVerbonden.Checked = false;      // Lampje/Radiobutton uit
+            labelStatus.Text = "Status: Niet verbonden (USB losgekoppeld)";
+            labelStatus.ForeColor = System.Drawing.Color.Red;
+
+            // Toon een duidelijke melding aan de gebruiker
+            MessageBox.Show("De USB-kabel is uitgetrokken. De verbinding is verbroken.",
+                            "Verbinding Verloren",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+        }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
